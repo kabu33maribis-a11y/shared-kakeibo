@@ -1,0 +1,112 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function memberData(groupId) {
+      return get(/databases/$(database)/documents/groups/$(groupId)).data.members;
+    }
+
+    function isGroupMember(groupId) {
+      let members = memberData(groupId);
+      return isSignedIn() && (
+        members.member1 == request.auth.uid ||
+        members.member2 == request.auth.uid
+      );
+    }
+
+    function hasOpenSlot(members) {
+      return members.member1 == null || members.member2 == null;
+    }
+
+    function isValidDisplayName(name) {
+      return name is string && name.size() > 0 && name.size() <= 20;
+    }
+
+    function displayNamesData(data) {
+      return data.keys().hasAll(['displayNames'])
+        ? data.displayNames
+        : { member1: '', member2: '' };
+    }
+
+    function isJoinUpdate(groupId) {
+      let oldMembers = resource.data.members;
+      let newMembers = request.resource.data.members;
+      let oldNames = displayNamesData(resource.data);
+      let newNames = request.resource.data.displayNames;
+      let uid = request.auth.uid;
+
+      return resource.data.inviteCode == request.resource.data.inviteCode &&
+        hasOpenSlot(oldMembers) &&
+        !isGroupMember(groupId) &&
+        (
+          (
+            oldMembers.member1 == null &&
+            newMembers.member1 == uid &&
+            newMembers.member2 == oldMembers.member2 &&
+            isValidDisplayName(newNames.member1) &&
+            newNames.member2 == oldNames.member2
+          ) ||
+          (
+            oldMembers.member2 == null &&
+            newMembers.member2 == uid &&
+            newMembers.member1 == oldMembers.member1 &&
+            isValidDisplayName(newNames.member2) &&
+            newNames.member1 == oldNames.member1
+          )
+        );
+    }
+
+    function isOwnDisplayNameUpdate(groupId) {
+      let uid = request.auth.uid;
+      let oldMembers = resource.data.members;
+      let newMembers = request.resource.data.members;
+      let oldNames = displayNamesData(resource.data);
+      let newNames = request.resource.data.displayNames;
+
+      return isGroupMember(groupId) &&
+        resource.data.inviteCode == request.resource.data.inviteCode &&
+        newMembers.member1 == oldMembers.member1 &&
+        newMembers.member2 == oldMembers.member2 &&
+        (
+          (
+            oldMembers.member1 == uid &&
+            isValidDisplayName(newNames.member1) &&
+            newNames.member2 == oldNames.member2
+          ) ||
+          (
+            oldMembers.member2 == uid &&
+            isValidDisplayName(newNames.member2) &&
+            newNames.member1 == oldNames.member1
+          )
+        );
+    }
+
+    match /groups/{groupId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+        request.resource.data.inviteCode is string &&
+        request.resource.data.displayNames is map &&
+        (
+          (
+            request.resource.data.members.member1 == request.auth.uid &&
+            request.resource.data.members.member2 == null &&
+            isValidDisplayName(request.resource.data.displayNames.member1)
+          ) ||
+          (
+            request.resource.data.members.member2 == request.auth.uid &&
+            request.resource.data.members.member1 == null &&
+            isValidDisplayName(request.resource.data.displayNames.member2)
+          )
+        );
+      allow update: if isGroupMember(groupId) || isJoinUpdate(groupId) || isOwnDisplayNameUpdate(groupId);
+
+      match /expenses/{expenseId} {
+        allow read, write: if isGroupMember(groupId);
+      }
+    }
+  }
+}

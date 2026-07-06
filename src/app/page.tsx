@@ -1,65 +1,305 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  signInWithEmail,
+  signInWithGoogle,
+  signUpWithEmail,
+} from "@/features/auth/auth_service";
+import { useAuth } from "@/features/auth/auth_context";
+import {
+  createGroup,
+  joinGroupByInviteCode,
+} from "@/features/auth/group_service";
+import { validateDisplayName } from "@/types";
+
+export default function HomePage() {
+  const { user, group, firebaseReady, setGroup } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleAuth = async (mode: "signin" | "signup") => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (mode === "signup") {
+        await signUpWithEmail(email, password);
+      } else {
+        await signInWithEmail(email, password);
+      }
+    } catch (authError) {
+      setError(
+        authError instanceof Error
+          ? authError.message
+          : "認証に失敗しました。",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      await signInWithGoogle();
+    } catch (authError) {
+      setError(
+        authError instanceof Error
+          ? authError.message
+          : "Googleログインに失敗しました。",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateGroup = async () => {
+    if (!user) {
+      return;
+    }
+
+    const nameError = validateDisplayName(displayName);
+    if (nameError) {
+      setError(nameError);
+      return;
+    }
+
+    setError(null);
+    setLoading(true);
+
+    try {
+      const nextGroup = await createGroup(user.uid, displayName);
+      setGroup(nextGroup);
+    } catch (groupError) {
+      setError(
+        groupError instanceof Error
+          ? groupError.message
+          : "グループ作成に失敗しました。",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJoinGroup = async () => {
+    if (!user) {
+      return;
+    }
+
+    const nameError = validateDisplayName(displayName);
+    if (nameError) {
+      setError(nameError);
+      return;
+    }
+
+    setError(null);
+    setLoading(true);
+
+    try {
+      const nextGroup = await joinGroupByInviteCode(
+        user.uid,
+        inviteCode,
+        displayName,
+      );
+      setGroup(nextGroup);
+    } catch (groupError) {
+      setError(
+        groupError instanceof Error
+          ? groupError.message
+          : "グループ参加に失敗しました。",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!firebaseReady) {
+    return (
+      <div className="mx-auto flex min-h-svh w-full max-w-lg flex-col justify-center gap-4 p-4 sm:p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">共有家計簿</CardTitle>
+            <CardDescription className="text-base">
+              Firebase の環境変数が未設定です。`.env.example` を
+              `.env.local` にコピーして値を入力してください。
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  if (user && group) {
+    return (
+      <div className="flex min-h-svh flex-1 items-center justify-center p-6 text-base text-muted-foreground">
+        ダッシュボードへ移動しています...
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="mx-auto flex min-h-svh w-full max-w-lg flex-col justify-center gap-4 p-4 sm:p-6">
+      <div className="space-y-2 text-center">
+        <h1 className="text-3xl font-bold">共有家計簿</h1>
+        <p className="text-sm text-muted-foreground">
+          2人で支出を共有し、毎月の精算を自動計算します
+        </p>
+      </div>
+
+      {!user ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>ログイン</CardTitle>
+            <CardDescription>
+              メール/パスワードまたは Google でログインしてください
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">メールアドレス</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">パスワード</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                disabled={loading}
+                onClick={() => {
+                  void handleAuth("signin");
+                }}
+              >
+                ログイン
+              </Button>
+              <Button
+                variant="outline"
+                disabled={loading}
+                onClick={() => {
+                  void handleAuth("signup");
+                }}
+              >
+                新規登録
+              </Button>
+            </div>
+            <Button
+              variant="secondary"
+              className="w-full"
+              disabled={loading}
+              onClick={() => {
+                void handleGoogleSignIn();
+              }}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+              Google でログイン
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>グループ設定</CardTitle>
+            <CardDescription>
+              家計簿を新規作成するか、招待コードで参加してください
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="create">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="create">新規作成</TabsTrigger>
+                <TabsTrigger value="join">参加</TabsTrigger>
+              </TabsList>
+              <TabsContent value="create" className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="create-display-name">あなたの表示名</Label>
+                  <Input
+                    id="create-display-name"
+                    value={displayName}
+                    onChange={(event) => setDisplayName(event.target.value)}
+                    placeholder="例: たろう"
+                    maxLength={20}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    支出の支払い者や精算メッセージに表示されます
+                  </p>
+                </div>
+                <Button
+                  className="w-full"
+                  disabled={loading}
+                  onClick={() => {
+                    void handleCreateGroup();
+                  }}
+                >
+                  グループを作成
+                </Button>
+              </TabsContent>
+              <TabsContent value="join" className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="join-display-name">あなたの表示名</Label>
+                  <Input
+                    id="join-display-name"
+                    value={displayName}
+                    onChange={(event) => setDisplayName(event.target.value)}
+                    placeholder="例: はなこ"
+                    maxLength={20}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="invite-code">招待コード</Label>
+                  <Input
+                    id="invite-code"
+                    value={inviteCode}
+                    onChange={(event) => setInviteCode(event.target.value)}
+                    placeholder="例: ABC123"
+                  />
+                </div>
+                <Button
+                  className="w-full"
+                  disabled={loading}
+                  onClick={() => {
+                    void handleJoinGroup();
+                  }}
+                >
+                  グループに参加
+                </Button>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      )}
+
+      {error && (
+        <p className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
