@@ -7,7 +7,7 @@ import { useAuth } from "@/features/auth/auth_context";
 const PUBLIC_PATHS = ["/"];
 
 export function AuthGuard({ children }: { children: ReactNode }) {
-  const { user, group, loading, firebaseReady } = useAuth();
+  const { user, group, loading, firebaseReady, isAdmin } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -25,6 +25,13 @@ export function AuthGuard({ children }: { children: ReactNode }) {
       return;
     }
 
+    if (user && pathname.startsWith("/admin")) {
+      if (!isAdmin) {
+        router.replace(group ? "/dashboard" : "/");
+      }
+      return;
+    }
+
     if (user && group && pathname === "/") {
       router.replace("/dashboard");
       return;
@@ -33,7 +40,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     if (user && !group && pathname !== "/") {
       router.replace("/");
     }
-  }, [user, group, loading, firebaseReady, pathname, router]);
+  }, [user, group, loading, firebaseReady, isAdmin, pathname, router]);
 
   if (loading) {
     return (

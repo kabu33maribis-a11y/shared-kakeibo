@@ -25,7 +25,15 @@ import {
 import { validateDisplayName } from "@/types";
 
 export default function HomePage() {
-  const { user, group, firebaseReady, setGroup } = useAuth();
+  const {
+    user,
+    group,
+    firebaseReady,
+    setGroup,
+    isAdmin,
+    accessDeniedMessage,
+    clearAccessDeniedMessage,
+  } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [inviteCode, setInviteCode] = useState("");
@@ -160,16 +168,29 @@ export default function HomePage() {
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">共有家計簿</h1>
         <p className="text-sm text-muted-foreground">
-          2人で支出を共有し、毎月の精算を自動計算します
+          許可されたメールアドレスのみログインできます
         </p>
       </div>
+
+      {accessDeniedMessage && (
+        <p className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {accessDeniedMessage}
+          <button
+            type="button"
+            className="ml-2 underline"
+            onClick={clearAccessDeniedMessage}
+          >
+            閉じる
+          </button>
+        </p>
+      )}
 
       {!user ? (
         <Card>
           <CardHeader>
             <CardTitle>ログイン</CardTitle>
             <CardDescription>
-              メール/パスワードまたは Google でログインしてください
+              管理者に許可されたメールでログインしてください
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -230,7 +251,18 @@ export default function HomePage() {
               家計簿を新規作成するか、招待コードで参加してください
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {isAdmin && (
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => {
+                  window.location.href = "/admin";
+                }}
+              >
+                ユーザー管理を開く
+              </Button>
+            )}
             <Tabs defaultValue="create">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="create">新規作成</TabsTrigger>

@@ -115,3 +115,38 @@ export const CATEGORY_META: Record<
 };
 
 export type HistoryFilter = "all" | MemberKey | "pending";
+
+export interface AppConfig {
+  adminEmails: string[];
+}
+
+export interface AllowedEmail {
+  id: string;
+  email: string;
+  createdAt: Timestamp | null;
+  createdBy: string | null;
+  note?: string;
+}
+
+export interface AppUser {
+  id: string;
+  email: string;
+  displayName: string;
+  createdAt: Timestamp | null;
+  lastLoginAt: Timestamp | null;
+}
+
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+export function validateEmail(email: string): string | null {
+  const normalized = normalizeEmail(email);
+  if (!normalized) {
+    return "メールアドレスを入力してください";
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+    return "メールアドレスの形式が正しくありません";
+  }
+  return null;
+}
