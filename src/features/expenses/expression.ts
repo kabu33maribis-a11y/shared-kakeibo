@@ -1,5 +1,39 @@
 const ALLOWED_PATTERN = /^[\d+\-*/().\s]+$/;
 
+/** クリップボードや入力欄の金額文字列を数式用に正規化する */
+export function normalizeAmountText(raw: string): string {
+  return raw
+    .replace(/[０-９]/g, (char) =>
+      String.fromCharCode(char.charCodeAt(0) - 0xff10 + 0x30),
+    )
+    .replace(/[＋]/g, "+")
+    .replace(/[－−‐]/g, "-")
+    .replace(/[×✖]/g, "*")
+    .replace(/[÷／]/g, "/")
+    .replace(/[（]/g, "(")
+    .replace(/[）]/g, ")")
+    .replace(/[¥￥円,，\s]/g, "");
+}
+
+/** 数値・カンマ付き金額・簡易数式をパースして整数円にする */
+export function parseAmountInput(raw: string): number {
+  const normalized = normalizeAmountText(raw);
+  if (!normalized) {
+    throw new Error("金額が空です");
+  }
+
+  if (/[+\-*/()]/.test(normalized)) {
+    return evaluateExpression(normalized);
+  }
+
+  const amount = Number(normalized);
+  if (!Number.isFinite(amount)) {
+    throw new Error("金額が不正です");
+  }
+
+  return Math.round(amount);
+}
+
 export function evaluateExpression(expression: string): number {
   const normalized = expression.replace(/\s/g, "");
   if (!normalized || !ALLOWED_PATTERN.test(normalized)) {

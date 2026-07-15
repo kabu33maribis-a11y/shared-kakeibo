@@ -3,9 +3,11 @@ import type { Expense, MemberKey } from "@/types";
 import {
   calculateSettlement,
   countPending,
+  dateStringForYearMonth,
   filterByMonth,
   filterConfirmedExpenses,
   formatSettlementMessage,
+  shiftYearMonth,
 } from "./settlement";
 
 function createExpense(overrides: Partial<Expense> = {}): Expense {
@@ -99,5 +101,16 @@ describe("settlement", () => {
     ];
 
     expect(countPending(expenses)).toBe(2);
+  });
+
+  it("shifts year-month across year boundaries", () => {
+    expect(shiftYearMonth("2026-01", -1)).toBe("2025-12");
+    expect(shiftYearMonth("2025-12", 1)).toBe("2026-01");
+  });
+
+  it("uses today for current month and first day otherwise", () => {
+    const now = new Date(2026, 6, 15);
+    expect(dateStringForYearMonth("2026-07", now)).toBe("2026-07-15");
+    expect(dateStringForYearMonth("2026-06", now)).toBe("2026-06-01");
   });
 });

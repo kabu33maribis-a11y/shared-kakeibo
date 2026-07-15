@@ -111,7 +111,8 @@ service cloud.firestore {
     }
 
     match /allowedEmails/{email} {
-      allow get: if isSignedIn() && authEmail() == email;
+      // ログイン直後の許可チェック（未許可かどうか確認できる必要がある）
+      allow get: if isSignedIn();
       allow list: if isAdmin();
       allow create, update, delete: if isAdmin();
     }
@@ -119,9 +120,11 @@ service cloud.firestore {
     match /users/{uid} {
       allow get: if isSignedIn() && (request.auth.uid == uid || isAdmin());
       allow list: if isAdmin();
-      allow create, update: if isAllowlisted() &&
+      allow create, update: if isSignedIn() &&
         request.auth.uid == uid &&
-        request.resource.data.email == authEmail();
+        request.resource.data.email is string &&
+        request.resource.data.email == authEmail() &&
+        isAllowlisted();
       allow delete: if isAdmin();
     }
 

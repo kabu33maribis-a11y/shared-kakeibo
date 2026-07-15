@@ -1,4 +1,4 @@
-import { evaluateExpression } from "@/features/expenses/expression";
+import { evaluateExpression, parseAmountInput } from "@/features/expenses/expression";
 import { describe, expect, it } from "vitest";
 
 describe("evaluateExpression", () => {
@@ -12,5 +12,24 @@ describe("evaluateExpression", () => {
 
   it("rejects invalid characters", () => {
     expect(() => evaluateExpression("alert(1)")).toThrow();
+  });
+});
+
+describe("parseAmountInput", () => {
+  it("parses plain numbers", () => {
+    expect(parseAmountInput("1236")).toBe(1236);
+  });
+
+  it("strips currency symbols and commas", () => {
+    expect(parseAmountInput("¥1,236")).toBe(1236);
+    expect(parseAmountInput("1,236円")).toBe(1236);
+  });
+
+  it("parses full-width digits", () => {
+    expect(parseAmountInput("１２３６")).toBe(1236);
+  });
+
+  it("evaluates expressions after normalizing", () => {
+    expect(parseAmountInput("10000 - 2,439")).toBe(7561);
   });
 });

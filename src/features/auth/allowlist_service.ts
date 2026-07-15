@@ -31,10 +31,15 @@ export async function isEmailAllowed(email: string): Promise<boolean> {
     return false;
   }
 
-  const snapshot = await getDoc(
-    doc(getFirestoreDb(), "allowedEmails", normalized),
-  );
-  return snapshot.exists();
+  try {
+    const snapshot = await getDoc(
+      doc(getFirestoreDb(), "allowedEmails", normalized),
+    );
+    return snapshot.exists();
+  } catch (error) {
+    console.error("isEmailAllowed failed", error);
+    throw error;
+  }
 }
 
 export async function listAllowedEmails(): Promise<AllowedEmail[]> {

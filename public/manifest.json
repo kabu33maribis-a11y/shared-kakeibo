@@ -4,8 +4,8 @@
   "description": "2人で支出を共有し、毎月の精算を自動計算する家計簿アプリ",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0f172a",
+  "background_color": "#f6faf9",
+  "theme_color": "#16877c",
   "orientation": "portrait",
   "lang": "ja",
   "icons": [

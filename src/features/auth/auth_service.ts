@@ -2,6 +2,7 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -27,6 +28,10 @@ export async function signInWithEmail(email: string, password: string) {
     password,
   );
   return credential.user;
+}
+
+export async function resetPassword(email: string) {
+  await sendPasswordResetEmail(getFirebaseAuth(), email.trim());
 }
 
 export async function signInWithGoogle() {

@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   CATEGORY_META,
@@ -19,22 +18,21 @@ const CATEGORIES = Object.entries(CATEGORY_META) as [
 
 export function CategoryGrid({ value, onChange }: CategoryGridProps) {
   return (
-    <div className="flex gap-1">
+    <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
       {CATEGORIES.map(([key, meta]) => (
-        <Button
+        <button
           key={key}
           type="button"
-          variant={value === key ? "default" : "outline"}
-          size="sm"
           className={cn(
-            "h-8 min-w-0 flex-1 px-1 text-xs",
-            value === key && "shadow-sm",
+            "flex min-w-0 flex-col items-center gap-1 rounded-xl border border-transparent bg-muted/60 px-1.5 py-2 text-xs font-medium text-muted-foreground transition-all",
+            value === key &&
+              "border-primary/20 bg-primary/10 text-primary shadow-sm",
           )}
           onClick={() => onChange(key)}
         >
-          <span className="mr-0.5 shrink-0">{meta.emoji}</span>
+          <span className="text-lg leading-none">{meta.emoji}</span>
           <span className="truncate">{meta.label}</span>
-        </Button>
+        </button>
       ))}
     </div>
   );

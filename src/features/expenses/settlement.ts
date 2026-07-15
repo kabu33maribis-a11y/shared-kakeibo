@@ -92,6 +92,24 @@ export function formatMonthLabel(yearMonth: string): string {
   return `${Number(month)}月分（${year}年）`;
 }
 
+export function shiftYearMonth(yearMonth: string, delta: number): string {
+  const [yearText, monthText] = yearMonth.split("-");
+  const date = new Date(Number(yearText), Number(monthText) - 1 + delta, 1);
+  return formatYearMonth(date);
+}
+
+/** Selected month の保存日。当月なら今日、それ以外は月初。 */
+export function dateStringForYearMonth(yearMonth: string, now = new Date()): string {
+  if (yearMonth === formatYearMonth(now)) {
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  return `${yearMonth}-01`;
+}
+
 export function getAvailableMonths(expenses: Expense[]): string[] {
   const months = new Set(expenses.map((expense) => expense.date.slice(0, 7)));
   return Array.from(months).sort((a, b) => b.localeCompare(a));

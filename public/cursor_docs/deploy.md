@@ -1,7 +1,8 @@
 # デプロイ手順書
 
 共有家計簿アプリを本番環境（Vercel + Firebase）へ公開する手順です。  
-機能仕様は [spec/feature.md](./spec/feature.md) を参照してください。
+機能仕様は [spec/feature.md](./spec/feature.md)、  
+日常運用・ユーザー管理は [operations.md](./operations.md) を参照してください。
 
 ---
 

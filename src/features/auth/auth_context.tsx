@@ -125,9 +125,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setGroup(nextGroup);
       } catch (error) {
         console.error(error);
-        setAccessDeniedMessage(
-          "アクセス確認に失敗しました。しばらくしてから再度お試しください。",
-        );
+        const code =
+          error && typeof error === "object" && "code" in error
+            ? String((error as { code: string }).code)
+            : "";
+        const detail =
+          error instanceof Error ? error.message : "不明なエラー";
+
+        if (code.includes("permission-denied")) {
+          setAccessDeniedMessage(
+            "Firestoreの権限エラーです。ルールのデプロイと、allowedEmails（小文字のメール）・config/app の設定を確認してください。",
+          );
+        } else {
+          setAccessDeniedMessage(
+            `アクセス確認に失敗しました（${code || detail}）。`,
+          );
+        }
         setUser(null);
         setGroup(null);
         setIsAdmin(false);

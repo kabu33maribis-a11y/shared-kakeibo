@@ -27,6 +27,8 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning: var(--warning);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -49,30 +51,32 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.982 0.006 180);
+  --foreground: oklch(0.22 0.025 180);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.22 0.025 180);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.22 0.025 180);
+  --primary: oklch(0.5 0.12 175);
+  --primary-foreground: oklch(0.99 0.005 175);
+  --secondary: oklch(0.94 0.025 175);
+  --secondary-foreground: oklch(0.32 0.06 175);
+  --muted: oklch(0.955 0.012 180);
+  --muted-foreground: oklch(0.5 0.025 180);
+  --accent: oklch(0.93 0.035 175);
+  --accent-foreground: oklch(0.32 0.07 175);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --warning: oklch(0.95 0.06 85);
+  --warning-foreground: oklch(0.42 0.09 65);
+  --border: oklch(0.9 0.015 180);
+  --input: oklch(0.9 0.015 180);
+  --ring: oklch(0.6 0.12 175);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --radius: 0.75rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -99,6 +103,8 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --warning: oklch(0.34 0.06 70);
+  --warning-foreground: oklch(0.91 0.09 85);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
@@ -128,5 +134,9 @@
   }
   body {
     @apply min-h-svh bg-background text-base text-foreground;
+    background-image:
+      radial-gradient(circle at 10% 0%, color-mix(in oklch, var(--primary) 8%, transparent), transparent 28rem),
+      radial-gradient(circle at 100% 25%, color-mix(in oklch, var(--accent) 45%, transparent), transparent 24rem);
+    background-attachment: fixed;
   }
 }

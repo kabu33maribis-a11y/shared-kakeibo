@@ -1,42 +1,49 @@
 "use client";
 
+import { AlertCircle, ArrowRight } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   calculateSettlement,
   formatSettlementMessage,
-  formatYearMonth,
 } from "@/features/expenses/settlement";
 import type { Expense, MemberKey } from "@/types";
 
 interface SettlementCardProps {
   expenses: Expense[];
   memberLabels: Record<MemberKey, string>;
+  yearMonth: string;
 }
 
 export function SettlementCard({
   expenses,
   memberLabels,
+  yearMonth,
 }: SettlementCardProps) {
-  const yearMonth = formatYearMonth(new Date());
   const settlement = calculateSettlement(expenses, yearMonth);
 
   return (
     <Card size="sm">
-      <CardContent className="space-y-2 pt-0">
-        <p className="text-sm leading-snug">
+      <CardHeader className="pb-0">
+        <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <ArrowRight className="size-3.5 text-primary" />
+          精算
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 pt-0">
+        <p className="text-base font-semibold leading-snug">
           {formatSettlementMessage(settlement, memberLabels)}
         </p>
-        <div className="grid grid-cols-2 gap-1.5 text-xs">
-          <div className="rounded-md bg-muted px-2 py-1.5">
-            <span className="text-muted-foreground">{memberLabels.member1}</span>
-            <span className="ml-1 font-medium">
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-xl bg-muted/70 px-3 py-2">
+            <span className="block truncate text-muted-foreground">{memberLabels.member1}</span>
+            <span className="mt-0.5 block font-semibold tabular-nums">
               {settlement.totalMember1.toLocaleString("ja-JP")}円
             </span>
           </div>
-          <div className="rounded-md bg-muted px-2 py-1.5">
-            <span className="text-muted-foreground">{memberLabels.member2}</span>
-            <span className="ml-1 font-medium">
+          <div className="rounded-xl bg-muted/70 px-3 py-2">
+            <span className="block truncate text-muted-foreground">{memberLabels.member2}</span>
+            <span className="mt-0.5 block font-semibold tabular-nums">
               {settlement.totalMember2.toLocaleString("ja-JP")}円
             </span>
           </div>
@@ -56,7 +63,8 @@ export function PendingAlert({ count }: PendingAlertProps) {
   }
 
   return (
-    <Alert className="border-amber-300 bg-amber-50 px-3 py-2 text-amber-950">
+    <Alert className="border-warning/80 bg-warning px-3 py-2 text-warning-foreground">
+      <AlertCircle />
       <AlertDescription className="text-xs">
         未確定の支出が {count}件あります
       </AlertDescription>

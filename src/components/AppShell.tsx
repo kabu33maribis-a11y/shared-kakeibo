@@ -73,15 +73,15 @@ export function AppShell({
 
   return (
     <div className="flex min-h-svh flex-1 flex-col">
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-10 bg-background/85 shadow-[0_1px_0_rgb(0_0_0/0.04)] backdrop-blur-xl">
         <AppNav />
-        <div className="px-4 py-2">
-        <div className="mx-auto flex max-w-lg items-center justify-between gap-2">
+        <div className="px-4 py-3">
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline gap-2">
-              <h1 className="text-lg font-semibold">{title}</h1>
+              <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
               {group && (
-                <span className="truncate text-xs text-muted-foreground">
+                <span className="truncate rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium tracking-wider text-muted-foreground">
                   {group.inviteCode}
                 </span>
               )}
@@ -91,7 +91,7 @@ export function AppShell({
                 {currentName && !editingName && (
                   <button
                     type="button"
-                    className="text-xs text-primary underline-offset-2 hover:underline"
+                    className="text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
                     onClick={startEditingName}
                   >
                     {currentName}（変更）
@@ -135,7 +135,7 @@ export function AppShell({
             )}
           </div>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             className="shrink-0"
             onClick={() => {
@@ -147,7 +147,7 @@ export function AppShell({
         </div>
         </div>
       </header>
-      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-2 px-4 py-2">
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-3 px-4 py-4 pb-8">
         {children}
       </main>
     </div>

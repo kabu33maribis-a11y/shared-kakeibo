@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import {
   PendingAlert,
   SettlementCard,
 } from "@/components/dashboard/DashboardWidgets";
 import { ExpenseInputForm } from "@/components/input/ExpenseInputForm";
+import { MonthSwitcher } from "@/components/MonthSwitcher";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/auth_context";
 import {
@@ -17,35 +19,47 @@ import {
 
 export default function DashboardPage() {
   const { expenses, memberLabels } = useAuth();
-  const yearMonth = formatYearMonth(new Date());
-  const monthlyConfirmed = filterConfirmedExpenses(
-    filterByMonth(expenses, yearMonth),
+  const [selectedMonth, setSelectedMonth] = useState(
+    () => formatYearMonth(new Date()),
   );
+  const monthlyExpenses = filterByMonth(expenses, selectedMonth);
+  const monthlyConfirmed = filterConfirmedExpenses(monthlyExpenses);
   const total = monthlyConfirmed.reduce(
     (sum, expense) => sum + expense.amount,
     0,
   );
-  const pendingCount = countPending(filterByMonth(expenses, yearMonth));
+  const pendingCount = countPending(monthlyExpenses);
 
   return (
     <AppShell title="ホーム">
+      <MonthSwitcher value={selectedMonth} onChange={setSelectedMonth} />
+
       <PendingAlert count={pendingCount} />
 
-      <Card size="sm">
-        <CardContent className="flex items-baseline justify-between gap-3 pt-0">
-          <span className="shrink-0 text-sm text-muted-foreground">今月</span>
-          <p className="text-2xl font-bold tracking-tight">
+      <Card size="sm" className="border-primary/15 bg-primary text-primary-foreground shadow-[0_14px_36px_rgb(15_118_110/0.18)]">
+        <CardContent className="flex items-end justify-between gap-3 pt-0">
+          <div>
+            <span className="text-xs font-medium text-primary-foreground/70">
+              この月の支出
+            </span>
+            <p className="mt-1 text-sm font-medium">合計</p>
+          </div>
+          <p className="text-3xl font-bold tracking-tight tabular-nums">
             {total.toLocaleString("ja-JP")}
-            <span className="ml-0.5 text-sm font-medium text-muted-foreground">
+            <span className="ml-1 text-sm font-medium text-primary-foreground/70">
               円
             </span>
           </p>
         </CardContent>
       </Card>
 
-      <SettlementCard expenses={expenses} memberLabels={memberLabels} />
+      <SettlementCard
+        expenses={expenses}
+        memberLabels={memberLabels}
+        yearMonth={selectedMonth}
+      />
 
-      <ExpenseInputForm />
+      <ExpenseInputForm yearMonth={selectedMonth} />
     </AppShell>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  resetPassword,
   signInWithEmail,
   signInWithGoogle,
   signUpWithEmail,
@@ -39,10 +41,12 @@ export default function HomePage() {
   const [inviteCode, setInviteCode] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleAuth = async (mode: "signin" | "signup") => {
     setError(null);
+    setInfo(null);
     setLoading(true);
 
     try {
@@ -62,8 +66,36 @@ export default function HomePage() {
     }
   };
 
+  const handleResetPassword = async () => {
+    setError(null);
+    setInfo(null);
+
+    if (!email.trim()) {
+      setError("パスワード再設定用のメールアドレスを入力してください。");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await resetPassword(email);
+      setInfo(
+        "パスワード再設定用のメールを送信しました。受信箱を確認してください。",
+      );
+    } catch (authError) {
+      setError(
+        authError instanceof Error
+          ? authError.message
+          : "パスワード再設定メールの送信に失敗しました。",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setError(null);
+    setInfo(null);
     setLoading(true);
 
     try {
@@ -164,11 +196,14 @@ export default function HomePage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-lg flex-col justify-center gap-4 p-4 sm:p-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">共有家計簿</h1>
+    <div className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center gap-5 p-4 sm:p-6">
+      <div className="space-y-3 text-center">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_12px_30px_rgb(15_118_110/0.2)]">
+          <WalletCards className="size-7" />
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight">共有家計簿</h1>
         <p className="text-sm text-muted-foreground">
-          許可されたメールアドレスのみログインできます
+          ふたりの支出を、かんたんに。
         </p>
       </div>
 
@@ -186,7 +221,7 @@ export default function HomePage() {
       )}
 
       {!user ? (
-        <Card>
+        <Card className="shadow-[0_18px_50px_rgb(15_118_110/0.1)]">
           <CardHeader>
             <CardTitle>ログイン</CardTitle>
             <CardDescription>
@@ -232,6 +267,16 @@ export default function HomePage() {
               </Button>
             </div>
             <Button
+              variant="ghost"
+              className="w-full"
+              disabled={loading}
+              onClick={() => {
+                void handleResetPassword();
+              }}
+            >
+              パスワードを忘れた
+            </Button>
+            <Button
               variant="secondary"
               className="w-full"
               disabled={loading}
@@ -244,7 +289,7 @@ export default function HomePage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="shadow-[0_18px_50px_rgb(15_118_110/0.1)]">
           <CardHeader>
             <CardTitle>グループ設定</CardTitle>
             <CardDescription>
@@ -327,6 +372,11 @@ export default function HomePage() {
         </Card>
       )}
 
+      {info && (
+        <p className="rounded-lg bg-muted px-4 py-3 text-sm text-foreground">
+          {info}
+        </p>
+      )}
       {error && (
         <p className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
