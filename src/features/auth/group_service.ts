@@ -4,6 +4,7 @@ import {
   getDoc,
   getDocs,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -111,6 +112,43 @@ export async function findGroupByMemberUid(uid: string): Promise<Group | null> {
   }
 
   return mapGroupDocument(docSnapshot.id, docSnapshot.data());
+}
+
+export async function listAllGroups(): Promise<Group[]> {
+  const snapshot = await getDocs(collection(getFirestoreDb(), "groups"));
+  return snapshot.docs
+    .map((document) => mapGroupDocument(document.id, document.data()))
+    .sort((a, b) => a.inviteCode.localeCompare(b.inviteCode, "ja"));
+}
+
+export async function removeGroupMember(
+  groupId: string,
+  memberKey: MemberKey,
+): Promise<void> {
+  const groupRef = doc(getFirestoreDb(), "groups", groupId);
+
+  await runTransaction(getFirestoreDb(), async (transaction) => {
+    const snapshot = await transaction.get(groupRef);
+    if (!snapshot.exists()) {
+      throw new Error("グループが見つかりません。");
+    }
+
+    const group = mapGroupDocument(snapshot.id, snapshot.data());
+    if (!group.members[memberKey]) {
+      throw new Error("このメンバーは既に排除されています。");
+    }
+
+    transaction.update(groupRef, {
+      members: {
+        ...group.members,
+        [memberKey]: null,
+      },
+      displayNames: {
+        ...group.displayNames,
+        [memberKey]: "",
+      },
+    });
+  });
 }
 
 export async function createGroup(

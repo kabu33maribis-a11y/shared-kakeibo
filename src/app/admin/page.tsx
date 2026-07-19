@@ -13,15 +13,20 @@ import {
   removeAllowedEmail,
 } from "@/features/auth/allowlist_service";
 import {
+  listAllGroups,
+  removeGroupMember,
+} from "@/features/auth/group_service";
+import {
   formatTimestamp,
   listAppUsers,
 } from "@/features/auth/user_service";
-import type { AllowedEmail, AppUser } from "@/types";
+import { MEMBER_KEYS, type AllowedEmail, type AppUser, type Group, type MemberKey } from "@/types";
 
 export default function AdminPage() {
   const { user, isAdmin } = useAuth();
   const [allowedEmails, setAllowedEmails] = useState<AllowedEmail[]>([]);
   const [users, setUsers] = useState<AppUser[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [emailInput, setEmailInput] = useState("");
   const [noteInput, setNoteInput] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -34,12 +39,14 @@ export default function AdminPage() {
     setError(null);
 
     try {
-      const [nextAllowed, nextUsers] = await Promise.all([
+      const [nextAllowed, nextUsers, nextGroups] = await Promise.all([
         listAllowedEmails(),
         listAppUsers(),
+        listAllGroups(),
       ]);
       setAllowedEmails(nextAllowed);
       setUsers(nextUsers);
+      setGroups(nextGroups);
     } catch (loadError) {
       setError(
         loadError instanceof Error
@@ -55,7 +62,11 @@ export default function AdminPage() {
     if (!isAdmin) {
       return;
     }
-    void loadData();
+
+    const timeoutId = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, [isAdmin, loadData]);
 
   const handleAddEmail = async () => {
@@ -108,6 +119,43 @@ export default function AdminPage() {
     }
   };
 
+  const handleRemoveMember = async (
+    group: Group,
+    memberKey: MemberKey,
+  ) => {
+    const memberUid = group.members[memberKey];
+    if (!memberUid) {
+      return;
+    }
+
+    const displayName = group.displayNames[memberKey] || memberUid;
+    if (
+      !window.confirm(
+        `「${displayName}」をグループ ${group.inviteCode} から排除しますか？`,
+      )
+    ) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      await removeGroupMember(group.id, memberKey);
+      setMessage("グループからメンバーを排除しました。");
+      await loadData();
+    } catch (removeError) {
+      setError(
+        removeError instanceof Error
+          ? removeError.message
+          : "メンバーの排除に失敗しました。",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (!isAdmin) {
     return (
       <AppShell title="管理">
@@ -117,7 +165,7 @@ export default function AdminPage() {
   }
 
   return (
-    <AppShell title="ユーザー管理">
+    <AppShell title="管理">
       <Card size="sm">
         <CardHeader className="pb-0">
           <CardTitle className="text-sm">許可メールを追加</CardTitle>
@@ -169,6 +217,78 @@ export default function AdminPage() {
           {error}
         </p>
       )}
+
+      <Card size="sm">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-sm">
+            グループ（{groups.length}）
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 pt-2">
+          {loading ? (
+            <p className="text-xs text-muted-foreground">読み込み中...</p>
+          ) : groups.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              まだグループがありません
+            </p>
+          ) : (
+            groups.map((group) => (
+              <div key={group.id} className="space-y-1.5 rounded-md border p-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium">
+                    招待コード: {group.inviteCode || "—"}
+                  </p>
+                  <p className="truncate text-[10px] text-muted-foreground">
+                    {group.id}
+                  </p>
+                </div>
+                {MEMBER_KEYS.map((memberKey) => {
+                  const memberUid = group.members[memberKey];
+                  if (!memberUid) {
+                    return (
+                      <div
+                        key={memberKey}
+                        className="rounded-md bg-muted px-2 py-1.5 text-xs text-muted-foreground"
+                      >
+                        空き
+                      </div>
+                    );
+                  }
+
+                  const appUser = users.find((item) => item.id === memberUid);
+                  const displayName =
+                    group.displayNames[memberKey] || appUser?.displayName || "—";
+
+                  return (
+                    <div
+                      key={memberKey}
+                      className="flex items-center justify-between gap-2 rounded-md bg-muted px-2 py-1.5"
+                    >
+                      <div className="min-w-0 text-xs">
+                        <p className="truncate font-medium">{displayName}</p>
+                        <p className="truncate text-muted-foreground">
+                          {appUser?.email || memberUid}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 shrink-0 text-xs"
+                        disabled={saving}
+                        onClick={() => {
+                          void handleRemoveMember(group, memberKey);
+                        }}
+                      >
+                        排除
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
 
       <Card size="sm">
         <CardHeader className="pb-0">

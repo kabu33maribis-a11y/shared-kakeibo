@@ -129,7 +129,7 @@ service cloud.firestore {
     }
 
     match /groups/{groupId} {
-      allow read: if isAllowlisted();
+      allow read: if isAllowlisted() || isAdmin();
       allow create: if isAllowlisted() &&
         request.resource.data.inviteCode is string &&
         request.resource.data.displayNames is map &&
@@ -145,7 +145,7 @@ service cloud.firestore {
             isValidDisplayName(request.resource.data.displayNames.member2)
           )
         );
-      allow update: if isGroupMember(groupId) || isJoinUpdate(groupId) || isOwnDisplayNameUpdate(groupId);
+      allow update: if isAdmin() || isGroupMember(groupId) || isJoinUpdate(groupId) || isOwnDisplayNameUpdate(groupId);
 
       match /expenses/{expenseId} {
         allow read, write: if isGroupMember(groupId);
