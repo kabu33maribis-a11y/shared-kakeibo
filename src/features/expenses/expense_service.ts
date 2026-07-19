@@ -1,5 +1,4 @@
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -7,6 +6,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  writeBatch,
   type Unsubscribe,
 } from "firebase/firestore";
 import { getFirestoreDb } from "@/lib/firebase";
@@ -43,17 +43,36 @@ export async function deleteExpense(groupId: string, expenseId: string) {
 }
 
 export async function addExpense(groupId: string, input: ExpenseInput) {
+  await addExpenses(groupId, [input]);
+}
+
+export async function addExpenses(groupId: string, inputs: ExpenseInput[]) {
+  if (inputs.length === 0) {
+    return;
+  }
+  if (inputs.length > 500) {
+    throw new Error("一度に保存できる支出は500件までです。");
+  }
+
+  const db = getFirestoreDb();
   const expensesRef = collection(
-    getFirestoreDb(),
+    db,
     "groups",
     groupId,
     "expenses",
   );
+  const batch = writeBatch(db);
 
-  await addDoc(expensesRef, {
-    ...input,
-    createdAt: serverTimestamp(),
+  inputs.forEach((input) => {
+    const { note, ...requiredFields } = input;
+    batch.set(doc(expensesRef), {
+      ...requiredFields,
+      ...(note === undefined ? {} : { note }),
+      createdAt: serverTimestamp(),
+    });
   });
+
+  await batch.commit();
 }
 
 export function subscribeExpenses(
