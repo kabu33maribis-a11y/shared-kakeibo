@@ -232,7 +232,7 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
                     }
                     onBlur={() => commitAmountExpression(row)}
                     onPaste={(event) => handlePasteAmount(event, row.id)}
-                    placeholder=""
+                    placeholder="金額"
                   />
                 </div>
                 <div className="space-y-1.5">
