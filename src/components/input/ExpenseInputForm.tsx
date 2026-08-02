@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ClipboardEvent } from "react";
+import { useEffect, useRef, useState, type ClipboardEvent } from "react";
 import { CategoryGrid } from "@/components/input/CategoryGrid";
 import { PayerToggle } from "@/components/input/PayerToggle";
 import { Button } from "@/components/ui/button";
@@ -12,32 +12,46 @@ import { useAuth } from "@/features/auth/auth_context";
 import { parseAmountInput } from "@/features/expenses/expression";
 import { addExpenses } from "@/features/expenses/expense_service";
 import { dateStringForYearMonth } from "@/features/expenses/settlement";
-import type { ExpenseCategory, MemberKey } from "@/types";
+import { subscribeStores } from "@/features/stores/store_service";
+import type { ExpenseCategory, MemberKey, Store } from "@/types";
 
 interface ExpenseInputFormProps {
   yearMonth: string;
 }
 
+type TitleMode = "item" | "store";
+
 interface ExpenseRow {
   id: number;
   amountInput: string;
   title: string;
+  titleMode: TitleMode;
   note: string;
 }
 
 function createExpenseRow(id: number): ExpenseRow {
-  return { id, amountInput: "", title: "", note: "" };
+  return { id, amountInput: "", title: "", titleMode: "item", note: "" };
 }
 
 export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
   const { group, memberKey, memberLabels } = useAuth();
   const nextRowId = useRef(1);
   const [rows, setRows] = useState<ExpenseRow[]>(() => [createExpenseRow(0)]);
+  const [stores, setStores] = useState<Store[]>([]);
   const [paidByOverride, setPaidByOverride] = useState<MemberKey | null>(null);
   const paidBy = paidByOverride ?? memberKey ?? "member1";
   const [category, setCategory] = useState<ExpenseCategory>("food");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!group) {
+      setStores([]);
+      return;
+    }
+
+    return subscribeStores(group.id, setStores);
+  }, [group]);
 
   const resetForm = () => {
     setRows([createExpenseRow(nextRowId.current++)]);
@@ -143,7 +157,6 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
           title: row.title.trim(),
           amount: row.amount!,
           paidBy,
-          isPending: false,
           note: row.note.trim() || undefined,
         })),
       );
@@ -219,25 +232,81 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
                     }
                     onBlur={() => commitAmountExpression(row)}
                     onPaste={(event) => handlePasteAmount(event, row.id)}
-                    placeholder="1200 または 10000-2439"
+                    placeholder=""
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label
-                    htmlFor={`title-${row.id}`}
-                    className="text-xs font-medium text-muted-foreground"
+                  <div
+                    className="flex w-fit rounded-lg border border-border/70 bg-background/70 p-0.5"
+                    role="group"
+                    aria-label="品名または店名"
                   >
-                    品名
-                  </Label>
-                  <Input
-                    id={`title-${row.id}`}
-                    className="h-10 bg-background/70"
-                    value={row.title}
-                    onChange={(event) =>
-                      updateRow(row.id, { title: event.target.value })
-                    }
-                    placeholder="スーパー買い物"
-                  />
+                    <button
+                      type="button"
+                      className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                        row.titleMode === "item"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                      onClick={() =>
+                        updateRow(row.id, {
+                          titleMode: "item",
+                          title: "",
+                        })
+                      }
+                    >
+                      品名
+                    </button>
+                    <button
+                      type="button"
+                      className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                        row.titleMode === "store"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                      onClick={() =>
+                        updateRow(row.id, {
+                          titleMode: "store",
+                          title: "",
+                        })
+                      }
+                    >
+                      店名
+                    </button>
+                  </div>
+                  {row.titleMode === "store" ? (
+                    <select
+                      id={`title-${row.id}`}
+                      aria-label="店名"
+                      className="h-10 w-full rounded-lg border border-input bg-background/70 px-2.5 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      value={row.title}
+                      onChange={(event) =>
+                        updateRow(row.id, { title: event.target.value })
+                      }
+                    >
+                      <option value="">
+                        {stores.length === 0
+                          ? "その他タブで店を追加"
+                          : "店を選択"}
+                      </option>
+                      {stores.map((store) => (
+                        <option key={store.id} value={store.name}>
+                          {store.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input
+                      id={`title-${row.id}`}
+                      aria-label="品名"
+                      className="h-10 bg-background/70"
+                      value={row.title}
+                      onChange={(event) =>
+                        updateRow(row.id, { title: event.target.value })
+                      }
+                      placeholder="スーパー買い物"
+                    />
+                  )}
                 </div>
               </div>
 

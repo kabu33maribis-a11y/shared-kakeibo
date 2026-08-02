@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth_context";
 import { deleteExpense } from "@/features/expenses/expense_service";
-import { cn } from "@/lib/utils";
-import { CATEGORY_META, type Expense } from "@/types";
+import type { Expense } from "@/types";
+import { CATEGORY_META } from "@/types";
 
 interface ExpenseCardProps {
   expense: Expense;
@@ -22,10 +21,6 @@ export function ExpenseCard({ expense }: ExpenseCardProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopyAmount = async () => {
-    if (expense.isPending) {
-      return;
-    }
-
     try {
       await navigator.clipboard.writeText(String(expense.amount));
       setCopied(true);
@@ -86,34 +81,25 @@ export function ExpenseCard({ expense }: ExpenseCardProps) {
   }
 
   return (
-    <div
-      className={cn(
-        "flex items-center gap-3 rounded-2xl border border-border/60 bg-card/90 px-3 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
-        expense.isPending && "border-warning bg-warning/45",
-      )}
-    >
+    <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/90 px-3 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-xl">
         {category.emoji}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-semibold">
-            {expense.title || "（品名なし）"}
-          </p>
-          {expense.isPending && <Badge variant="secondary">未確定</Badge>}
-        </div>
+        <p className="truncate text-sm font-semibold">
+          {expense.title || "（品名なし）"}
+        </p>
         <p className="mt-0.5 text-xs text-muted-foreground">
           {expense.date} · {memberLabels[expense.paidBy]}
         </p>
       </div>
       <button
         type="button"
-        className="min-w-0 text-right transition-opacity hover:opacity-70 disabled:opacity-100"
+        className="min-w-0 text-right transition-opacity hover:opacity-70"
         onClick={() => {
           void handleCopyAmount();
         }}
         title="金額をコピー"
-        disabled={expense.isPending}
       >
         <p className="whitespace-nowrap font-semibold tabular-nums">
           {expense.amount.toLocaleString("ja-JP")}円

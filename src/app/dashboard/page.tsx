@@ -2,18 +2,13 @@
 
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import {
-  PendingAlert,
-  SettlementCard,
-} from "@/components/dashboard/DashboardWidgets";
+import { SettlementCard } from "@/components/dashboard/DashboardWidgets";
 import { ExpenseInputForm } from "@/components/input/ExpenseInputForm";
 import { MonthSwitcher } from "@/components/MonthSwitcher";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/auth_context";
 import {
-  countPending,
   filterByMonth,
-  filterConfirmedExpenses,
   formatYearMonth,
 } from "@/features/expenses/settlement";
 
@@ -23,18 +18,14 @@ export default function DashboardPage() {
     () => formatYearMonth(new Date()),
   );
   const monthlyExpenses = filterByMonth(expenses, selectedMonth);
-  const monthlyConfirmed = filterConfirmedExpenses(monthlyExpenses);
-  const total = monthlyConfirmed.reduce(
+  const total = monthlyExpenses.reduce(
     (sum, expense) => sum + expense.amount,
     0,
   );
-  const pendingCount = countPending(monthlyExpenses);
 
   return (
     <AppShell title="ホーム">
       <MonthSwitcher value={selectedMonth} onChange={setSelectedMonth} />
-
-      <PendingAlert count={pendingCount} />
 
       <Card size="sm" className="border-primary/15 bg-primary text-primary-foreground shadow-[0_14px_36px_rgb(15_118_110/0.18)]">
         <CardContent className="flex items-end justify-between gap-3 pt-0">

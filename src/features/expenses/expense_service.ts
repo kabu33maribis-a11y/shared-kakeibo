@@ -24,7 +24,6 @@ function mapExpenseDocument(
     title: String(data.title ?? ""),
     amount: Number(data.amount ?? 0),
     paidBy: normalizeMemberKey(data.paidBy) ?? "member1",
-    isPending: Boolean(data.isPending),
     note: data.note ? String(data.note) : undefined,
     createdAt: data.createdAt as Expense["createdAt"],
   };
@@ -94,5 +93,3 @@ export function subscribeExpenses(
     callback(expenses);
   });
 }
-
-export { countPending } from "@/features/expenses/settlement";

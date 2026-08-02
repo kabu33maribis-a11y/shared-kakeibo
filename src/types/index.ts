@@ -36,7 +36,6 @@ export interface Expense {
   title: string;
   amount: number;
   paidBy: MemberKey;
-  isPending: boolean;
   note?: string;
   createdAt: Timestamp;
 }
@@ -114,7 +113,26 @@ export const CATEGORY_META: Record<
   other: { label: "その他", emoji: "🧺" },
 };
 
-export type HistoryFilter = "all" | MemberKey | "pending";
+export type HistoryFilter = "all" | MemberKey;
+
+export interface Store {
+  id: string;
+  name: string;
+  createdAt: Timestamp;
+}
+
+export type StoreInput = Omit<Store, "id" | "createdAt">;
+
+export function validateStoreName(name: string): string | null {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return "店名を入力してください";
+  }
+  if (trimmed.length > 40) {
+    return "店名は40文字以内で入力してください";
+  }
+  return null;
+}
 
 export interface AppConfig {
   adminEmails: string[];

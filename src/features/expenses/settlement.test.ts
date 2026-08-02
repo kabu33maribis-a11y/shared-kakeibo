@@ -2,10 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { Expense, MemberKey } from "@/types";
 import {
   calculateSettlement,
-  countPending,
   dateStringForYearMonth,
   filterByMonth,
-  filterConfirmedExpenses,
   formatSettlementMessage,
   shiftYearMonth,
 } from "./settlement";
@@ -18,7 +16,6 @@ function createExpense(overrides: Partial<Expense> = {}): Expense {
     title: "テスト",
     amount: 1000,
     paidBy: "member1",
-    isPending: false,
     createdAt: {} as Expense["createdAt"],
     ...overrides,
   };
@@ -29,16 +26,6 @@ describe("settlement", () => {
     member1: "たろう",
     member2: "はなこ",
   };
-
-  it("excludes pending expenses from settlement", () => {
-    const expenses = [
-      createExpense({ amount: 1000, isPending: false }),
-      createExpense({ id: "expense-2", amount: 5000, isPending: true }),
-    ];
-
-    expect(filterConfirmedExpenses(expenses)).toHaveLength(1);
-    expect(calculateSettlement(expenses, "2025-05").totalAll).toBe(1000);
-  });
 
   it("filters expenses by month", () => {
     const expenses = [
@@ -91,16 +78,6 @@ describe("settlement", () => {
     expect(result.amount).toBe(0);
     expect(result.from).toBeNull();
     expect(formatSettlementMessage(result, labels)).toContain("精算は不要");
-  });
-
-  it("counts pending expenses", () => {
-    const expenses = [
-      createExpense({ isPending: true }),
-      createExpense({ id: "expense-2", isPending: false }),
-      createExpense({ id: "expense-3", isPending: true }),
-    ];
-
-    expect(countPending(expenses)).toBe(2);
   });
 
   it("shifts year-month across year boundaries", () => {

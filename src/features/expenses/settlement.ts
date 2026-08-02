@@ -4,10 +4,6 @@ import {
   type SettlementResult,
 } from "@/types";
 
-export function filterConfirmedExpenses(expenses: Expense[]): Expense[] {
-  return expenses.filter((expense) => !expense.isPending);
-}
-
 export function filterByMonth(expenses: Expense[], yearMonth: string): Expense[] {
   return expenses.filter((expense) => expense.date.startsWith(yearMonth));
 }
@@ -18,20 +14,14 @@ export function sumByMember(expenses: Expense[], member: MemberKey): number {
     .reduce((sum, expense) => sum + expense.amount, 0);
 }
 
-export function countPending(expenses: Expense[]): number {
-  return expenses.filter((expense) => expense.isPending).length;
-}
-
 export function calculateSettlement(
   expenses: Expense[],
   yearMonth: string,
 ): SettlementResult {
-  const monthlyConfirmed = filterConfirmedExpenses(
-    filterByMonth(expenses, yearMonth),
-  );
+  const monthly = filterByMonth(expenses, yearMonth);
 
-  const totalMember1 = sumByMember(monthlyConfirmed, "member1");
-  const totalMember2 = sumByMember(monthlyConfirmed, "member2");
+  const totalMember1 = sumByMember(monthly, "member1");
+  const totalMember2 = sumByMember(monthly, "member2");
   const totalAll = totalMember1 + totalMember2;
   const target = Math.floor(totalAll / 2);
 

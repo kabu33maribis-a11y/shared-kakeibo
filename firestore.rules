@@ -150,6 +150,10 @@ service cloud.firestore {
       match /expenses/{expenseId} {
         allow read, write: if isGroupMember(groupId);
       }
+
+      match /stores/{storeId} {
+        allow read, write: if isGroupMember(groupId);
+      }
     }
   }
 }

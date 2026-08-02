@@ -1,7 +1,6 @@
 "use client";
 
-import { AlertCircle, ArrowRight } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   calculateSettlement,
@@ -50,24 +49,5 @@ export function SettlementCard({
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-interface PendingAlertProps {
-  count: number;
-}
-
-export function PendingAlert({ count }: PendingAlertProps) {
-  if (count === 0) {
-    return null;
-  }
-
-  return (
-    <Alert className="border-warning/80 bg-warning px-3 py-2 text-warning-foreground">
-      <AlertCircle />
-      <AlertDescription className="text-xs">
-        未確定の支出が {count}件あります
-      </AlertDescription>
-    </Alert>
   );
 }
