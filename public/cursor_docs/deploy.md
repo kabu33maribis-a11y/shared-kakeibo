@@ -27,7 +27,6 @@
 1. 左メニュー **Build → Authentication → Get started**
 2. **Sign-in method** タブで以下を有効化
    - **メール/パスワード** … 有効にする
-   - **Google** … 有効にする（プロジェクトのサポートメールを設定）
 
 ### 1.2 Cloud Firestore の作成
 
@@ -160,10 +159,6 @@ git push -u origin main
 1. Firebase Console → **Authentication → Settings → Authorized domains**
 2. Vercel のドメイン（例: `shared-kakeibo.vercel.app`）が一覧にない場合は **Add domain** で追加
 
-### 6.2 Google ログインを使う場合
-
-OAuth 同意画面・リダイレクト URI は Firebase が自動管理しますが、ログインエラーが出る場合は Firebase Console の Google プロバイダ設定を再確認してください。
-
 ---
 
 ## 7. PWA（ホーム画面追加）の確認
@@ -196,7 +191,6 @@ OAuth 同意画面・リダイレクト URI は Firebase が自動管理しま�
 | `Firebase config is missing` | `.env.local`（または Vercel 環境変数）を確認。変数名は `NEXT_PUBLIC_` プレフィックス必須 |
 | ログイン後に権限エラー | `firebase deploy --only firestore:rules` を再実行 |
 | 招待コードで参加できない | グループが既に 2 人で満員でないか、コードの大文字/小文字を確認 |
-| Google ログインが失敗する | Firebase の承認済みドメインと Google プロバイダの有効化を確認 |
 
 ---
 

@@ -16,7 +16,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   resetPassword,
   signInWithEmail,
-  signInWithGoogle,
   signUpWithEmail,
 } from "@/features/auth/auth_service";
 import { useAuth } from "@/features/auth/auth_context";
@@ -87,24 +86,6 @@ export default function HomePage() {
         authError instanceof Error
           ? authError.message
           : "パスワード再設定メールの送信に失敗しました。",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setError(null);
-    setInfo(null);
-    setLoading(true);
-
-    try {
-      await signInWithGoogle();
-    } catch (authError) {
-      setError(
-        authError instanceof Error
-          ? authError.message
-          : "Googleログインに失敗しました。",
       );
     } finally {
       setLoading(false);
@@ -275,16 +256,6 @@ export default function HomePage() {
               }}
             >
               パスワードを忘れた
-            </Button>
-            <Button
-              variant="secondary"
-              className="w-full"
-              disabled={loading}
-              onClick={() => {
-                void handleGoogleSignIn();
-              }}
-            >
-              Google でログイン
             </Button>
           </CardContent>
         </Card>
