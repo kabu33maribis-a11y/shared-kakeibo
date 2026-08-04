@@ -1,10 +1,18 @@
 import {
+  collapseDigitGaps,
   extractAmounts,
-  extractStoreName,
   extractTotalAmount,
+  parseAmountCloseup,
   parseReceiptText,
 } from "@/features/receipt/parse_receipt";
 import { describe, expect, it } from "vitest";
+
+describe("collapseDigitGaps", () => {
+  it("joins digits split by spaces or dots", () => {
+    expect(collapseDigitGaps("合 計 1 2 3 6")).toContain("1236");
+    expect(collapseDigitGaps("¥1.980")).toContain("1980");
+  });
+});
 
 describe("extractAmounts", () => {
   it("parses yen symbols and commas", () => {
@@ -18,74 +26,45 @@ describe("extractAmounts", () => {
 });
 
 describe("extractTotalAmount", () => {
-  it("prefers the total line over larger item amounts", () => {
-    const text = `
-セブンイレブン
-サンドイッチ 398
-お茶 120
-小計 518
-合計 ¥560
-`;
-    expect(extractTotalAmount(text)).toBe(560);
+  it("prefers the total line", () => {
+    expect(extractTotalAmount("小計 518\n合計 ¥560")).toBe(560);
   });
 
   it("recognizes ご請求 keyword", () => {
     expect(extractTotalAmount("ご請求金額 2,480円")).toBe(2480);
   });
 
-  it("falls back to the largest amount when no total keyword", () => {
-    const text = `
-ローソン
-牛乳 198
-パン 150
-`;
-    expect(extractTotalAmount(text)).toBe(198);
-  });
-
-  it("returns null when no amounts exist", () => {
-    expect(extractTotalAmount("ありがとう")).toBeNull();
+  it("returns null when no total keyword", () => {
+    expect(extractTotalAmount("牛乳 198\nパン 150")).toBeNull();
   });
 });
 
-describe("extractStoreName", () => {
-  it("uses the first meaningful line", () => {
-    const text = `
-2024/05/01 12:34
-TEL 03-1234-5678
-ファミリーマート渋谷店
-おにぎり 120
-合計 130円
-`;
-    expect(extractStoreName(text)).toBe("ファミリーマート渋谷店");
+describe("parseAmountCloseup", () => {
+  it("reads a total keyword line", () => {
+    expect(parseAmountCloseup("合計 ¥1,280")).toBe(1280);
   });
 
-  it("skips receipt header labels", () => {
-    const text = `
-領収書
-イオンモール
-合計 1,000円
-`;
-    expect(extractStoreName(text)).toBe("イオンモール");
+  it("reads a yen amount without keyword", () => {
+    expect(parseAmountCloseup("¥2,480")).toBe(2480);
+  });
+
+  it("reads OCR text with spaced digits", () => {
+    expect(parseAmountCloseup("合 計 ￥ 1 5 8 0 円")).toBe(1580);
+  });
+
+  it("falls back to the largest number in the crop", () => {
+    expect(parseAmountCloseup("税 128\n1580")).toBe(1580);
+  });
+
+  it("throws when nothing looks like an amount", () => {
+    expect(() => parseAmountCloseup("ありがとう")).toThrow(
+      "合計金額を読み取れませんでした",
+    );
   });
 });
 
 describe("parseReceiptText", () => {
-  it("returns store name and total", () => {
-    const result = parseReceiptText(`
-まいばすけっと
-牛乳 198
-合計 ¥218
-`);
-    expect(result).toEqual({ storeName: "まいばすけっと", amount: 218 });
-  });
-
-  it("throws when total cannot be read", () => {
-    expect(() => parseReceiptText("こんにちは")).toThrow(
-      "合計金額を読み取れませんでした",
-    );
-  });
-
-  it("allows empty store name when only amount is present", () => {
+  it("returns amount only (store name left blank for manual entry)", () => {
     expect(parseReceiptText("合計 500円")).toEqual({
       storeName: "",
       amount: 500,
