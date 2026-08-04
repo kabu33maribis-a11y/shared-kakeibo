@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState, type ClipboardEvent } from "react";
 import { CategoryGrid } from "@/components/input/CategoryGrid";
 import { PayerToggle } from "@/components/input/PayerToggle";
+import { ReceiptScanModal } from "@/components/input/ReceiptScanModal";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Camera, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ import { useAuth } from "@/features/auth/auth_context";
 import { parseAmountInput } from "@/features/expenses/expression";
 import { addExpenses } from "@/features/expenses/expense_service";
 import { dateStringForYearMonth } from "@/features/expenses/settlement";
+import type { ParsedReceipt } from "@/features/receipt/parse_receipt";
 import { subscribeStores } from "@/features/stores/store_service";
 import type { ExpenseCategory, MemberKey, Store } from "@/types";
 
@@ -43,6 +45,7 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
   const [category, setCategory] = useState<ExpenseCategory>("food");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [scanOpen, setScanOpen] = useState(false);
 
   useEffect(() => {
     if (!group) {
@@ -76,6 +79,24 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
   const removeRow = (id: number) => {
     setRows((currentRows) => currentRows.filter((row) => row.id !== id));
     setMessage(null);
+  };
+
+  const applyReceiptScan = (result: ParsedReceipt) => {
+    const rowId = nextRowId.current++;
+    setRows([
+      {
+        id: rowId,
+        amountInput: String(result.amount),
+        title: result.storeName,
+        titleMode: "item",
+        note: "",
+      },
+    ]);
+    setMessage(
+      result.storeName
+        ? `「${result.storeName}」 ${result.amount.toLocaleString("ja-JP")}円 を読み取りました。内容を確認して保存してください。`
+        : `${result.amount.toLocaleString("ja-JP")}円 を読み取りました。店名を入力して保存してください。`,
+    );
   };
 
   const resolveAmount = (amountInput: string): number | null => {
@@ -183,6 +204,18 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
             title="入力欄を追加"
           >
             <Plus className="size-4" />
+          </button>
+          <button
+            type="button"
+            className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={() => {
+              setMessage(null);
+              setScanOpen(true);
+            }}
+            aria-label="レシートを撮影して記入"
+            title="レシートを撮影"
+          >
+            <Camera className="size-4" />
           </button>
           支出を追加
         </CardTitle>
@@ -359,6 +392,12 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
           <p className="rounded-xl bg-muted px-3 py-2 text-xs">{message}</p>
         )}
       </CardContent>
+
+      <ReceiptScanModal
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        onParsed={applyReceiptScan}
+      />
     </Card>
   );
 }
