@@ -32,7 +32,7 @@ interface ExpenseRow {
 }
 
 function createExpenseRow(id: number): ExpenseRow {
-  return { id, amountInput: "", title: "", titleMode: "item", note: "" };
+  return { id, amountInput: "", title: "", titleMode: "store", note: "" };
 }
 
 export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
@@ -193,8 +193,9 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
   };
 
   return (
-    <Card size="sm">
-      <CardHeader className="pb-0">
+    <>
+      <Card size="sm" className="pb-24">
+        <CardHeader className="pb-0">
         <CardTitle className="flex items-center gap-2">
           <button
             type="button"
@@ -221,6 +222,15 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 pt-0">
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">支払者</Label>
+          <PayerToggle
+            value={paidBy}
+            labels={memberLabels}
+            onChange={setPaidByOverride}
+          />
+        </div>
+
         <div className="space-y-3">
           {rows.map((row, index) => (
             <div
@@ -247,12 +257,14 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label
-                    htmlFor={`amount-${row.id}`}
-                    className="text-xs font-medium text-muted-foreground"
-                  >
-                    金額
-                  </Label>
+                  <div className="flex h-6 items-center">
+                    <Label
+                      htmlFor={`amount-${row.id}`}
+                      className="text-xs font-medium text-muted-foreground"
+                    >
+                      金額
+                    </Label>
+                  </div>
                   <Input
                     id={`amount-${row.id}`}
                     type="text"
@@ -270,7 +282,7 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
                 </div>
                 <div className="space-y-1.5">
                   <div
-                    className="flex w-fit rounded-lg border border-border/70 bg-background/70 p-0.5"
+                    className="flex h-6 w-fit items-center rounded-lg border border-border/70 bg-background/70 p-0.5"
                     role="group"
                     aria-label="品名または店名"
                   >
@@ -365,39 +377,35 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">支払い者</Label>
-          <PayerToggle
-            value={paidBy}
-            labels={memberLabels}
-            onChange={setPaidByOverride}
-          />
-        </div>
-
-        <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">カテゴリ</Label>
           <CategoryGrid value={category} onChange={setCategory} />
         </div>
-
-        <Button
-          className="h-10 w-full rounded-xl shadow-sm"
-          disabled={saving}
-          onClick={() => {
-            void handleSave();
-          }}
-        >
-          {saving ? "保存中..." : `${rows.length}件を保存する`}
-        </Button>
-
-        {message && (
-          <p className="rounded-xl bg-muted px-3 py-2 text-xs">{message}</p>
-        )}
       </CardContent>
 
-      <ReceiptScanModal
-        open={scanOpen}
-        onClose={() => setScanOpen(false)}
-        onParsed={applyReceiptScan}
-      />
-    </Card>
+        <ReceiptScanModal
+          open={scanOpen}
+          onClose={() => setScanOpen(false)}
+          onParsed={applyReceiptScan}
+        />
+      </Card>
+
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-4 pb-3 pt-6">
+        <div className="pointer-events-auto mx-auto max-w-lg space-y-2 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-lg backdrop-blur-md">
+          <Button
+            className="h-10 w-full rounded-xl shadow-sm"
+            disabled={saving}
+            onClick={() => {
+              void handleSave();
+            }}
+          >
+            {saving ? "保存中..." : `${rows.length}件を保存する`}
+          </Button>
+
+          {message && (
+            <p className="rounded-xl bg-muted px-3 py-2 text-xs">{message}</p>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
