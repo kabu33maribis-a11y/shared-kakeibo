@@ -5,6 +5,7 @@ import {
   dateStringForYearMonth,
   filterByMonth,
   formatSettlementMessage,
+  moveDateToYearMonth,
   shiftYearMonth,
 } from "./settlement";
 
@@ -89,5 +90,10 @@ describe("settlement", () => {
     const now = new Date(2026, 6, 15);
     expect(dateStringForYearMonth("2026-07", now)).toBe("2026-07-15");
     expect(dateStringForYearMonth("2026-06", now)).toBe("2026-06-01");
+  });
+
+  it("moves date to another month while preserving day", () => {
+    expect(moveDateToYearMonth("2026-08-05", "2026-07")).toBe("2026-07-05");
+    expect(moveDateToYearMonth("2026-08-31", "2026-09")).toBe("2026-09-30");
   });
 });

@@ -10,6 +10,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { getFirestoreDb } from "@/lib/firebase";
+import { moveDateToYearMonth } from "@/features/expenses/settlement";
 import type { Expense, ExpenseInput } from "@/types";
 import { normalizeMemberKey } from "@/types";
 
@@ -39,6 +40,31 @@ export async function deleteExpense(groupId: string, expenseId: string) {
   );
 
   await deleteDoc(expenseRef);
+}
+
+export async function moveExpensesToMonth(
+  groupId: string,
+  expenses: Pick<Expense, "id" | "date">[],
+  targetYearMonth: string,
+) {
+  if (expenses.length === 0) {
+    return;
+  }
+  if (expenses.length > 500) {
+    throw new Error("一度に移動できる支出は500件までです。");
+  }
+
+  const db = getFirestoreDb();
+  const batch = writeBatch(db);
+
+  expenses.forEach((expense) => {
+    const expenseRef = doc(db, "groups", groupId, "expenses", expense.id);
+    batch.update(expenseRef, {
+      date: moveDateToYearMonth(expense.date, targetYearMonth),
+    });
+  });
+
+  await batch.commit();
 }
 
 export async function addExpense(groupId: string, input: ExpenseInput) {

@@ -100,6 +100,22 @@ export function dateStringForYearMonth(yearMonth: string, now = new Date()): str
   return `${yearMonth}-01`;
 }
 
+/** 日付の日を保ったまま別の年月へ移す。末日を超える場合は月末に丸める。 */
+export function moveDateToYearMonth(date: string, targetYearMonth: string): string {
+  const day = Number(date.slice(8, 10));
+  if (!Number.isFinite(day) || day < 1) {
+    return `${targetYearMonth}-01`;
+  }
+
+  const [yearText, monthText] = targetYearMonth.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const lastDay = new Date(year, month, 0).getDate();
+  const clampedDay = Math.min(day, lastDay);
+
+  return `${targetYearMonth}-${String(clampedDay).padStart(2, "0")}`;
+}
+
 export function getAvailableMonths(expenses: Expense[]): string[] {
   const months = new Set(expenses.map((expense) => expense.date.slice(0, 7)));
   return Array.from(months).sort((a, b) => b.localeCompare(a));

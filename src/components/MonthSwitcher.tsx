@@ -12,12 +12,14 @@ interface MonthSwitcherProps {
   value: string;
   onChange: (yearMonth: string) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 export function MonthSwitcher({
   value,
   onChange,
   className,
+  disabled = false,
 }: MonthSwitcherProps) {
   const current = formatYearMonth(new Date());
   const label =
@@ -32,6 +34,7 @@ export function MonthSwitcher({
           variant="ghost"
           className="rounded-xl text-muted-foreground hover:text-primary"
           aria-label="前の月"
+          disabled={disabled}
           onClick={() => onChange(shiftYearMonth(value, -1))}
         >
           <ChevronLeft />
@@ -45,6 +48,7 @@ export function MonthSwitcher({
           variant="ghost"
           className="rounded-xl text-muted-foreground hover:text-primary"
           aria-label="次の月"
+          disabled={disabled}
           onClick={() => onChange(shiftYearMonth(value, 1))}
         >
           <ChevronRight />

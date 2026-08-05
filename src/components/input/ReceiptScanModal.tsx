@@ -223,7 +223,7 @@ export function ReceiptScanModal({
           </Button>
         </div>
 
-        <div className="relative aspect-[3/4] bg-black">
+        <div className="relative aspect-[3/4] overflow-hidden bg-black">
           <video
             ref={videoRef}
             className="size-full object-cover"
@@ -260,17 +260,28 @@ export function ReceiptScanModal({
           <p className="text-xs text-muted-foreground">
             レシート全体ではなく、合計金額付近だけを大きく撮影します。店名はあとから入力できます。画像は保存されません。
           </p>
-          <Button
-            type="button"
-            className="h-11 w-full rounded-xl"
-            disabled={phase === "recognizing" || !cameraReady}
-            onClick={() => {
-              void handleCapture();
-            }}
-          >
-            <Camera className="size-4" />
-            {phase === "recognizing" ? "読み取り中..." : "撮影して金額を読む"}
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              className="h-11 w-full rounded-xl"
+              disabled={phase === "recognizing" || !cameraReady}
+              onClick={() => {
+                void handleCapture();
+              }}
+            >
+              <Camera className="size-4" />
+              {phase === "recognizing" ? "読み取り中..." : "撮影して金額を読む"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full rounded-xl"
+              disabled={phase === "recognizing"}
+              onClick={handleClose}
+            >
+              キャンセル
+            </Button>
+          </div>
         </div>
       </div>
     </div>
