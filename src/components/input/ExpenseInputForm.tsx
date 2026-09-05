@@ -13,9 +13,16 @@ import { useAuth } from "@/features/auth/auth_context";
 import { parseAmountInput } from "@/features/expenses/expression";
 import { addExpenses } from "@/features/expenses/expense_service";
 import { dateStringForYearMonth } from "@/features/expenses/settlement";
+import { scheduleKeepInputVisible } from "@/lib/keep_input_visible";
 import type { ParsedReceipt } from "@/features/receipt/parse_receipt";
 import { subscribeStores } from "@/features/stores/store_service";
 import type { ExpenseCategory, MemberKey, Store } from "@/types";
+
+function handleFieldFocus(event: { target: EventTarget }) {
+  if (event.target instanceof HTMLElement) {
+    scheduleKeepInputVisible(event.target);
+  }
+}
 
 interface ExpenseInputFormProps {
   yearMonth: string;
@@ -194,7 +201,7 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
 
   return (
     <>
-      <Card size="sm" className="pb-24">
+      <Card size="sm" className="pb-24 [overflow-anchor:none]">
         <CardHeader className="pb-0">
         <CardTitle className="flex items-center gap-2">
           <button
@@ -270,11 +277,12 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
                     type="text"
                     inputMode="decimal"
                     autoComplete="off"
-                    className="h-10 bg-background/70 font-semibold tabular-nums"
+                    className="h-10 scroll-mb-32 scroll-mt-16 bg-background/70 font-semibold tabular-nums"
                     value={row.amountInput}
                     onChange={(event) =>
                       updateRow(row.id, { amountInput: event.target.value })
                     }
+                    onFocus={handleFieldFocus}
                     onBlur={() => commitAmountExpression(row)}
                     onPaste={(event) => handlePasteAmount(event, row.id)}
                     placeholder="金額"
@@ -323,11 +331,12 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
                     <select
                       id={`title-${row.id}`}
                       aria-label="店名"
-                      className="h-10 w-full rounded-lg border border-input bg-background/70 px-2.5 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      className="h-10 w-full scroll-mb-32 scroll-mt-16 rounded-lg border border-input bg-background/70 px-2.5 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                       value={row.title}
                       onChange={(event) =>
                         updateRow(row.id, { title: event.target.value })
                       }
+                      onFocus={handleFieldFocus}
                     >
                       <option value="">
                         {stores.length === 0
@@ -344,11 +353,12 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
                     <Input
                       id={`title-${row.id}`}
                       aria-label="品名"
-                      className="h-10 bg-background/70"
+                      className="h-10 scroll-mb-32 scroll-mt-16 bg-background/70"
                       value={row.title}
                       onChange={(event) =>
                         updateRow(row.id, { title: event.target.value })
                       }
+                      onFocus={handleFieldFocus}
                       placeholder="スーパー買い物"
                     />
                   )}
@@ -364,11 +374,12 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
                 </Label>
                 <Input
                   id={`note-${row.id}`}
-                  className="h-10 bg-background/70"
+                  className="h-10 scroll-mb-32 scroll-mt-16 bg-background/70"
                   value={row.note}
                   onChange={(event) =>
                     updateRow(row.id, { note: event.target.value })
                   }
+                  onFocus={handleFieldFocus}
                   placeholder="任意"
                 />
               </div>
@@ -390,7 +401,10 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
       </Card>
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-4 pb-3 pt-6">
-        <div className="pointer-events-auto mx-auto max-w-lg space-y-2 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-lg backdrop-blur-md">
+        <div
+          data-sticky-footer
+          className="pointer-events-auto mx-auto max-w-lg space-y-2 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-lg backdrop-blur-md"
+        >
           <Button
             className="h-10 w-full rounded-xl shadow-sm"
             disabled={saving}
