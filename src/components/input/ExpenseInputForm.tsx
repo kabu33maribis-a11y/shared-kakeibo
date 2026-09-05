@@ -10,7 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/features/auth/auth_context";
-import { parseAmountInput } from "@/features/expenses/expression";
+import {
+  isAmountMissing,
+  parseAmountInput,
+  resolveAmountInput,
+} from "@/features/expenses/expression";
 import { addExpenses } from "@/features/expenses/expense_service";
 import { dateStringForYearMonth } from "@/features/expenses/settlement";
 import type { ParsedReceipt } from "@/features/receipt/parse_receipt";
@@ -99,18 +103,6 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
     );
   };
 
-  const resolveAmount = (amountInput: string): number | null => {
-    if (!amountInput.trim()) {
-      return null;
-    }
-
-    try {
-      return parseAmountInput(amountInput);
-    } catch {
-      return null;
-    }
-  };
-
   const commitAmountExpression = (row: ExpenseRow) => {
     if (!row.amountInput.trim()) {
       return;
@@ -155,7 +147,7 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
 
     const resolvedRows = rows.map((row) => ({
       ...row,
-      amount: resolveAmount(row.amountInput),
+      amount: resolveAmountInput(row.amountInput),
     }));
     const invalidIndex = resolvedRows.findIndex(
       (row) => row.amount === null || row.amount <= 0,
@@ -191,6 +183,8 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
       setSaving(false);
     }
   };
+
+  const missingAmount = rows.some((row) => isAmountMissing(row.amountInput));
 
   return (
     <>
@@ -392,13 +386,20 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-4 pb-3 pt-6">
         <div className="pointer-events-auto mx-auto max-w-lg space-y-2 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-lg backdrop-blur-md">
           <Button
-            className="h-10 w-full rounded-xl shadow-sm"
-            disabled={saving}
+            className={`h-10 w-full rounded-xl shadow-sm ${
+              missingAmount ? "disabled:opacity-100" : ""
+            }`}
+            variant={missingAmount ? "secondary" : "default"}
+            disabled={saving || missingAmount}
             onClick={() => {
               void handleSave();
             }}
           >
-            {saving ? "保存中..." : `${rows.length}件を保存する`}
+            {saving
+              ? "保存中..."
+              : missingAmount
+                ? "金額を入力してください。"
+                : `${rows.length}件を保存する`}
           </Button>
 
           {message && (
