@@ -34,6 +34,24 @@ export function parseAmountInput(raw: string): number {
   return Math.round(amount);
 }
 
+/** 入力欄の金額を整数円にする。空・不正なら null */
+export function resolveAmountInput(amountInput: string): number | null {
+  if (!amountInput.trim()) {
+    return null;
+  }
+
+  try {
+    return parseAmountInput(amountInput);
+  } catch {
+    return null;
+  }
+}
+
+export function isAmountMissing(amountInput: string): boolean {
+  const amount = resolveAmountInput(amountInput);
+  return amount === null || amount <= 0;
+}
+
 export function evaluateExpression(expression: string): number {
   const normalized = expression.replace(/\s/g, "");
   if (!normalized || !ALLOWED_PATTERN.test(normalized)) {
