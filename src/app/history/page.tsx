@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CheckSquare, Download, FolderInput, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ExpenseList } from "@/components/history/ExpenseCard";
+import { FixedCostStatus } from "@/components/history/FixedCostStatus";
 import { MonthSwitcher } from "@/components/MonthSwitcher";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -147,6 +148,8 @@ export default function HistoryPage() {
         onChange={setSelectedMonth}
         disabled={selectionMode}
       />
+
+      <FixedCostStatus monthExpenses={monthExpenses} yearMonth={selectedMonth} />
 
       <div className="flex items-center justify-between gap-2">
         <Tabs
