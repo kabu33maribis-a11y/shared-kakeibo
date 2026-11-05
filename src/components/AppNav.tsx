@@ -38,7 +38,7 @@ export function AppNav() {
     <nav className="bg-background/70 backdrop-blur-xl">
       <div
         className={cn(
-          "mx-auto grid max-w-lg gap-1 rounded-b-2xl bg-muted/70 p-1.5",
+          "mx-auto grid max-w-lg gap-1 rounded-b-2xl bg-muted/70 p-1",
           NAV_GRID_COLS[navItems.length] ?? "grid-cols-4",
         )}
       >
@@ -50,7 +50,7 @@ export function AppNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center justify-center gap-1 rounded-xl py-2 text-center font-medium transition-all",
+                "flex items-center justify-center gap-1 rounded-xl py-1.5 text-center font-medium transition-all",
                 navItems.length >= 5
                   ? "flex-col gap-0.5 px-1 text-[11px]"
                   : "gap-1.5 px-3 text-sm",

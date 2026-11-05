@@ -168,3 +168,27 @@ export function validateEmail(email: string): string | null {
   }
   return null;
 }
+
+/** 毎月の固定費（電気・ガス・wifi など） */
+export interface FixedCost {
+  id: string;
+  name: string;
+  /** 0 のときは金額未定（毎回入力） */
+  amount: number;
+  category: ExpenseCategory;
+  paidBy: MemberKey;
+  /** スキップした年月 (YYYY-MM) */
+  skippedMonths: string[];
+  createdAt: Timestamp;
+}
+
+export function validateFixedCostName(name: string): string | null {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return "名前を入力してください";
+  }
+  if (trimmed.length > 40) {
+    return "名前は40文字以内で入力してください";
+  }
+  return null;
+}

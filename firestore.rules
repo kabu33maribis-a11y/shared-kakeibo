@@ -154,6 +154,10 @@ service cloud.firestore {
       match /stores/{storeId} {
         allow read, write: if isGroupMember(groupId);
       }
+
+      match /fixedCosts/{costId} {
+        allow read, write: if isGroupMember(groupId);
+      }
     }
   }
 }

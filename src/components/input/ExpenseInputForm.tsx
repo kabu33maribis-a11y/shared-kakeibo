@@ -3,17 +3,14 @@
 import { useEffect, useRef, useState, type ClipboardEvent } from "react";
 import { CategoryGrid } from "@/components/input/CategoryGrid";
 import { PayerToggle } from "@/components/input/PayerToggle";
-import { ReceiptScanModal } from "@/components/input/ReceiptScanModal";
 import { Button } from "@/components/ui/button";
-import { Camera, Plus, Trash2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Trash2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useAuth } from "@/features/auth/auth_context";
 import { parseAmountInput } from "@/features/expenses/expression";
 import { addExpenses } from "@/features/expenses/expense_service";
 import { dateStringForYearMonth } from "@/features/expenses/settlement";
-import type { ParsedReceipt } from "@/features/receipt/parse_receipt";
 import { subscribeStores } from "@/features/stores/store_service";
 import type { ExpenseCategory, MemberKey, Store } from "@/types";
 
@@ -45,7 +42,6 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
   const [category, setCategory] = useState<ExpenseCategory>("food");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [scanOpen, setScanOpen] = useState(false);
 
   useEffect(() => {
     if (!group) {
@@ -79,24 +75,6 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
   const removeRow = (id: number) => {
     setRows((currentRows) => currentRows.filter((row) => row.id !== id));
     setMessage(null);
-  };
-
-  const applyReceiptScan = (result: ParsedReceipt) => {
-    const rowId = nextRowId.current++;
-    setRows([
-      {
-        id: rowId,
-        amountInput: String(result.amount),
-        title: result.storeName,
-        titleMode: "item",
-        note: "",
-      },
-    ]);
-    setMessage(
-      result.storeName
-        ? `「${result.storeName}」 ${result.amount.toLocaleString("ja-JP")}円 を読み取りました。内容を確認して保存してください。`
-        : `${result.amount.toLocaleString("ja-JP")}円 を読み取りました。店名を入力して保存してください。`,
-    );
   };
 
   const resolveAmount = (amountInput: string): number | null => {
@@ -148,22 +126,22 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
     }
   };
 
+  const canSave =
+    !saving &&
+    rows.every((row) => {
+      const amount = resolveAmount(row.amountInput);
+      return amount !== null && amount > 0;
+    });
+
   const handleSave = async () => {
-    if (!group) {
+    if (!group || !canSave) {
       return;
     }
 
     const resolvedRows = rows.map((row) => ({
       ...row,
-      amount: resolveAmount(row.amountInput),
+      amount: resolveAmount(row.amountInput)!,
     }));
-    const invalidIndex = resolvedRows.findIndex(
-      (row) => row.amount === null || row.amount <= 0,
-    );
-    if (invalidIndex !== -1) {
-      setMessage(`支出 ${invalidIndex + 1} に0より大きい金額を入力してください。`);
-      return;
-    }
 
     setSaving(true);
     setMessage(null);
@@ -176,7 +154,7 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
           date,
           category,
           title: row.title.trim(),
-          amount: row.amount!,
+          amount: row.amount,
           paidBy,
           note: row.note.trim() || undefined,
         })),
@@ -194,83 +172,41 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
 
   return (
     <>
-      <Card size="sm" className="pb-24">
-        <CardHeader className="pb-0">
-        <CardTitle className="flex items-center gap-2">
-          <button
-            type="button"
-            className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={addRow}
-            aria-label="入力欄を追加"
-            title="入力欄を追加"
-          >
-            <Plus className="size-4" />
-          </button>
-          <button
-            type="button"
-            className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={() => {
-              setMessage(null);
-              setScanOpen(true);
-            }}
-            aria-label="レシートを撮影して記入"
-            title="レシートを撮影"
-          >
-            <Camera className="size-4" />
-          </button>
-          支出を追加
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4 pt-0">
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">支払者</Label>
-          <PayerToggle
-            value={paidBy}
-            labels={memberLabels}
-            onChange={setPaidByOverride}
-          />
-        </div>
-
-        <div className="space-y-3">
-          {rows.map((row, index) => (
-            <div
-              key={row.id}
-              className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-3"
+      <Card size="sm" className="gap-2 py-2 pb-20">
+        <CardContent className="space-y-2 px-3">
+          <div className="flex items-center gap-1.5">
+            <div className="min-w-0 flex-1">
+              <PayerToggle
+                value={paidBy}
+                labels={memberLabels}
+                onChange={setPaidByOverride}
+              />
+            </div>
+            <button
+              type="button"
+              className="flex h-9 shrink-0 items-center gap-1 rounded-lg bg-primary/10 px-2 text-primary transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={addRow}
+              aria-label="連続で記入"
+              title="連続で記入"
             >
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-muted-foreground">
-                  支出 {index + 1}
-                </p>
-                {rows.length > 1 && (
-                  <Button
-                    type="button"
-                    size="icon-xs"
-                    variant="ghost"
-                    className="text-muted-foreground hover:text-destructive"
-                    onClick={() => removeRow(row.id)}
-                    aria-label={`支出 ${index + 1} の入力欄を削除`}
-                  >
-                    <Trash2 />
-                  </Button>
-                )}
-              </div>
+              <Plus className="size-4" />
+            </button>
+          </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <div className="flex h-6 items-center">
-                    <Label
-                      htmlFor={`amount-${row.id}`}
-                      className="text-xs font-medium text-muted-foreground"
-                    >
-                      金額
-                    </Label>
-                  </div>
+          <div className="space-y-2">
+            {rows.map((row, index) => (
+              <div
+                key={row.id}
+                className="space-y-1.5 rounded-xl border border-border/70 bg-muted/20 p-2"
+              >
+                <div className="flex items-center gap-1.5">
                   <Input
                     id={`amount-${row.id}`}
                     type="text"
                     inputMode="decimal"
                     autoComplete="off"
-                    className="h-10 bg-background/70 font-semibold tabular-nums"
+                    aria-label="金額"
+                    className="h-9 w-24 shrink-0 bg-background/70 font-semibold tabular-nums"
                     value={row.amountInput}
                     onChange={(event) =>
                       updateRow(row.id, { amountInput: event.target.value })
@@ -279,51 +215,24 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
                     onPaste={(event) => handlePasteAmount(event, row.id)}
                     placeholder="金額"
                   />
-                </div>
-                <div className="space-y-1.5">
-                  <div
-                    className="flex h-6 w-fit items-center rounded-lg border border-border/70 bg-background/70 p-0.5"
-                    role="group"
-                    aria-label="品名または店名"
+                  <button
+                    type="button"
+                    className="h-9 shrink-0 rounded-lg bg-primary px-2 text-[11px] font-medium text-primary-foreground"
+                    aria-label="品名と店名を切り替え"
+                    onClick={() =>
+                      updateRow(row.id, {
+                        titleMode: row.titleMode === "item" ? "store" : "item",
+                        title: "",
+                      })
+                    }
                   >
-                    <button
-                      type="button"
-                      className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors ${
-                        row.titleMode === "item"
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                      onClick={() =>
-                        updateRow(row.id, {
-                          titleMode: "item",
-                          title: "",
-                        })
-                      }
-                    >
-                      品名
-                    </button>
-                    <button
-                      type="button"
-                      className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors ${
-                        row.titleMode === "store"
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                      onClick={() =>
-                        updateRow(row.id, {
-                          titleMode: "store",
-                          title: "",
-                        })
-                      }
-                    >
-                      店名
-                    </button>
-                  </div>
+                    {row.titleMode === "item" ? "品名" : "店名"}
+                  </button>
                   {row.titleMode === "store" ? (
                     <select
                       id={`title-${row.id}`}
                       aria-label="店名"
-                      className="h-10 w-full rounded-lg border border-input bg-background/70 px-2.5 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      className="h-9 min-w-0 flex-1 rounded-lg border border-input bg-background/70 px-2 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                       value={row.title}
                       onChange={(event) =>
                         updateRow(row.id, { title: event.target.value })
@@ -344,7 +253,7 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
                     <Input
                       id={`title-${row.id}`}
                       aria-label="品名"
-                      className="h-10 bg-background/70"
+                      className="h-9 min-w-0 flex-1 bg-background/70"
                       value={row.title}
                       onChange={(event) =>
                         updateRow(row.id, { title: event.target.value })
@@ -353,47 +262,35 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
                     />
                   )}
                 </div>
-              </div>
 
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor={`note-${row.id}`}
-                  className="text-xs font-medium text-muted-foreground"
-                >
-                  備考
-                </Label>
-                <Input
-                  id={`note-${row.id}`}
-                  className="h-10 bg-background/70"
-                  value={row.note}
-                  onChange={(event) =>
-                    updateRow(row.id, { note: event.target.value })
-                  }
-                  placeholder="任意"
-                />
+                {rows.length > 1 && (
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => removeRow(row.id)}
+                      aria-label={`支出 ${index + 1} の入力欄を削除`}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">カテゴリ</Label>
           <CategoryGrid value={category} onChange={setCategory} />
-        </div>
-      </CardContent>
+        </CardContent>
 
-        <ReceiptScanModal
-          open={scanOpen}
-          onClose={() => setScanOpen(false)}
-          onParsed={applyReceiptScan}
-        />
       </Card>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-4 pb-3 pt-6">
-        <div className="pointer-events-auto mx-auto max-w-lg space-y-2 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-lg backdrop-blur-md">
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-3 pb-2 pt-4">
+        <div className="pointer-events-auto mx-auto max-w-lg space-y-1.5 rounded-2xl border border-border/60 bg-card/95 p-2 shadow-lg backdrop-blur-md">
           <Button
             className="h-10 w-full rounded-xl shadow-sm"
-            disabled={saving}
+            disabled={!canSave}
             onClick={() => {
               void handleSave();
             }}
@@ -402,7 +299,7 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
           </Button>
 
           {message && (
-            <p className="rounded-xl bg-muted px-3 py-2 text-xs">{message}</p>
+            <p className="rounded-xl bg-muted px-3 py-1.5 text-xs">{message}</p>
           )}
         </div>
       </div>

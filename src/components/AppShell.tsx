@@ -75,11 +75,11 @@ export function AppShell({
     <div className="flex min-h-svh flex-1 flex-col">
       <header className="sticky top-0 z-10 bg-background/85 shadow-[0_1px_0_rgb(0_0_0/0.04)] backdrop-blur-xl">
         <AppNav />
-        <div className="px-4 py-3">
+        <div className="px-4 py-1">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline gap-2">
-              <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+              <h1 className="sr-only">{title}</h1>
               {group && (
                 <span className="truncate rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium tracking-wider text-muted-foreground">
                   {group.inviteCode}
@@ -87,7 +87,7 @@ export function AppShell({
               )}
             </div>
             {group && (
-              <div className="mt-0.5">
+              <div>
                 {currentName && !editingName && (
                   <button
                     type="button"
@@ -147,7 +147,7 @@ export function AppShell({
         </div>
         </div>
       </header>
-      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-3 px-4 py-4 pb-8">
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-2 px-4 py-2 pb-4">
         {children}
       </main>
     </div>

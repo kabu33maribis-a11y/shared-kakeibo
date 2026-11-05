@@ -27,7 +27,7 @@ export function MonthSwitcher({
 
   return (
     <div className={className}>
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/70 p-1.5 shadow-sm backdrop-blur-sm">
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/70 p-0.5 shadow-sm backdrop-blur-sm">
         <Button
           type="button"
           size="icon-sm"

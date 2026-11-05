@@ -18,13 +18,13 @@ const CATEGORIES = Object.entries(CATEGORY_META) as [
 
 export function CategoryGrid({ value, onChange }: CategoryGridProps) {
   return (
-    <div className="grid grid-cols-5 gap-1.5">
+    <div className="grid grid-cols-5 gap-1">
       {CATEGORIES.map(([key, meta]) => (
         <button
           key={key}
           type="button"
           className={cn(
-            "flex min-w-0 flex-col items-center gap-1 rounded-xl border border-transparent bg-muted/60 px-1 py-2 text-[11px] font-medium text-muted-foreground transition-all sm:px-1.5 sm:text-xs",
+            "flex min-w-0 flex-col items-center gap-0.5 rounded-lg border border-transparent bg-muted/60 px-1 py-1 text-[11px] font-medium text-muted-foreground transition-all sm:px-1.5 sm:text-xs",
             value === key &&
               "border-primary/20 bg-primary/10 text-primary shadow-sm",
           )}

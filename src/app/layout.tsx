@@ -29,6 +29,8 @@ export const viewport: Viewport = {
   themeColor: "#16877c",
   width: "device-width",
   initialScale: 1,
+  // キーボード表示でレイアウトをリサイズ/スクロールさせない
+  interactiveWidget: "overlays-content",
 };
 
 export default function RootLayout({
