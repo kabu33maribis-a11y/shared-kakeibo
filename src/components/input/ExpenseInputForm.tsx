@@ -8,11 +8,22 @@ import { Plus, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/features/auth/auth_context";
-import { parseAmountInput } from "@/features/expenses/expression";
+import {
+  isAmountMissing,
+  parseAmountInput,
+  resolveAmountInput,
+} from "@/features/expenses/expression";
 import { addExpenses } from "@/features/expenses/expense_service";
 import { dateStringForYearMonth } from "@/features/expenses/settlement";
 import { subscribeStores } from "@/features/stores/store_service";
+import { scheduleKeepInputVisible } from "@/lib/keep_input_visible";
 import type { ExpenseCategory, MemberKey, Store } from "@/types";
+
+function handleFieldFocus(event: { target: EventTarget }) {
+  if (event.target instanceof HTMLElement) {
+    scheduleKeepInputVisible(event.target);
+  }
+}
 
 interface ExpenseInputFormProps {
   yearMonth: string;
@@ -77,18 +88,6 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
     setMessage(null);
   };
 
-  const resolveAmount = (amountInput: string): number | null => {
-    if (!amountInput.trim()) {
-      return null;
-    }
-
-    try {
-      return parseAmountInput(amountInput);
-    } catch {
-      return null;
-    }
-  };
-
   const commitAmountExpression = (row: ExpenseRow) => {
     if (!row.amountInput.trim()) {
       return;
@@ -126,22 +125,22 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
     }
   };
 
-  const canSave =
-    !saving &&
-    rows.every((row) => {
-      const amount = resolveAmount(row.amountInput);
-      return amount !== null && amount > 0;
-    });
-
   const handleSave = async () => {
-    if (!group || !canSave) {
+    if (!group) {
       return;
     }
 
     const resolvedRows = rows.map((row) => ({
       ...row,
-      amount: resolveAmount(row.amountInput)!,
+      amount: resolveAmountInput(row.amountInput),
     }));
+    const invalidIndex = resolvedRows.findIndex(
+      (row) => row.amount === null || row.amount <= 0,
+    );
+    if (invalidIndex !== -1) {
+      setMessage(`支出 ${invalidIndex + 1} に0より大きい金額を入力してください。`);
+      return;
+    }
 
     setSaving(true);
     setMessage(null);
@@ -154,7 +153,7 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
           date,
           category,
           title: row.title.trim(),
-          amount: row.amount,
+          amount: row.amount!,
           paidBy,
           note: row.note.trim() || undefined,
         })),
@@ -170,9 +169,11 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
     }
   };
 
+  const missingAmount = rows.some((row) => isAmountMissing(row.amountInput));
+
   return (
     <>
-      <Card size="sm" className="gap-2 py-2 pb-20">
+      <Card size="sm" className="gap-2 py-2 pb-20 [overflow-anchor:none]">
         <CardContent className="space-y-2 px-3">
           <div className="flex items-center gap-1.5">
             <div className="min-w-0 flex-1">
@@ -211,6 +212,7 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
                     onChange={(event) =>
                       updateRow(row.id, { amountInput: event.target.value })
                     }
+                    onFocus={handleFieldFocus}
                     onBlur={() => commitAmountExpression(row)}
                     onPaste={(event) => handlePasteAmount(event, row.id)}
                     placeholder="金額"
@@ -237,6 +239,7 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
                       onChange={(event) =>
                         updateRow(row.id, { title: event.target.value })
                       }
+                      onFocus={handleFieldFocus}
                     >
                       <option value="">
                         {stores.length === 0
@@ -258,6 +261,7 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
                       onChange={(event) =>
                         updateRow(row.id, { title: event.target.value })
                       }
+                      onFocus={handleFieldFocus}
                       placeholder="スーパー買い物"
                     />
                   )}
@@ -287,15 +291,25 @@ export function ExpenseInputForm({ yearMonth }: ExpenseInputFormProps) {
       </Card>
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-3 pb-2 pt-4">
-        <div className="pointer-events-auto mx-auto max-w-lg space-y-1.5 rounded-2xl border border-border/60 bg-card/95 p-2 shadow-lg backdrop-blur-md">
+        <div
+          data-sticky-footer
+          className="pointer-events-auto mx-auto max-w-lg space-y-1.5 rounded-2xl border border-border/60 bg-card/95 p-2 shadow-lg backdrop-blur-md"
+        >
           <Button
-            className="h-10 w-full rounded-xl shadow-sm"
-            disabled={!canSave}
+            className={`h-10 w-full rounded-xl shadow-sm ${
+              missingAmount ? "disabled:opacity-100" : ""
+            }`}
+            variant={missingAmount ? "secondary" : "default"}
+            disabled={saving || missingAmount}
             onClick={() => {
               void handleSave();
             }}
           >
-            {saving ? "保存中..." : `${rows.length}件を保存する`}
+            {saving
+              ? "保存中..."
+              : missingAmount
+                ? "金額を入力してください。"
+                : `${rows.length}件を保存する`}
           </Button>
 
           {message && (

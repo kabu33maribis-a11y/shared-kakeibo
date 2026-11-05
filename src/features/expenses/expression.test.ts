@@ -1,4 +1,8 @@
-import { evaluateExpression, parseAmountInput } from "@/features/expenses/expression";
+import {
+  evaluateExpression,
+  isAmountMissing,
+  parseAmountInput,
+} from "@/features/expenses/expression";
 import { describe, expect, it } from "vitest";
 
 describe("evaluateExpression", () => {
@@ -31,5 +35,27 @@ describe("parseAmountInput", () => {
 
   it("evaluates expressions after normalizing", () => {
     expect(parseAmountInput("10000 - 2,439")).toBe(7561);
+  });
+});
+
+describe("isAmountMissing", () => {
+  it("treats empty input as missing", () => {
+    expect(isAmountMissing("")).toBe(true);
+    expect(isAmountMissing("   ")).toBe(true);
+  });
+
+  it("treats zero and negative amounts as missing", () => {
+    expect(isAmountMissing("0")).toBe(true);
+    expect(isAmountMissing("-100")).toBe(true);
+  });
+
+  it("treats unparseable input as missing", () => {
+    expect(isAmountMissing("abc")).toBe(true);
+    expect(isAmountMissing("100+")).toBe(true);
+  });
+
+  it("accepts a positive amount or valid expression", () => {
+    expect(isAmountMissing("1200")).toBe(false);
+    expect(isAmountMissing("1000+200")).toBe(false);
   });
 });

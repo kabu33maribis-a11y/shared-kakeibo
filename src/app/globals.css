@@ -131,6 +131,8 @@
     @apply font-sans text-base;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    scroll-padding-top: 4.5rem;
+    scroll-padding-bottom: 7rem;
   }
   body {
     @apply min-h-svh bg-background text-base text-foreground;
